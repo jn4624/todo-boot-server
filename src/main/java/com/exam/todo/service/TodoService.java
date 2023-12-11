@@ -26,18 +26,6 @@ public class TodoService {
         return repository.findByUserId(entity.getUserId());
     }
 
-    private void validate(final TodoEntity entity) {
-        if (entity == null) {
-            log.warn("Entity cannot be null");
-            throw new RuntimeException("Entity cannot be null");
-        }
-
-        if (entity.getUserId() == null) {
-            log.warn("Unknown user");
-            throw new RuntimeException("Unknown user");
-        }
-    }
-
     public List<TodoEntity> retrieve(final String userId) {
         return repository.findByUserId(userId);
     }
@@ -55,21 +43,41 @@ public class TodoService {
             todo.setDone(entity.isDone());
 
             // (4) 데이터베이스에 새 값을 저장
-//            repository.save(todo);
+            repository.save(todo);
         });
 
-        // optional과 lambda가 익숙하지 않다면 아래 코드로 대체 가능
-        /*if (original.isPresent()) {
-            // (3) 반환된 TodoEntity가 존재하면 값을 새 entity 값으로 변경
-            final TodoEntity todo = original.get();
-            todo.setTitle(entity.getTitle());
-            todo.setDone(entity.isDone());
-
-            // (4) 데이터베이스에 새 값을 저장
-            repository.save(todo);
-        }*/
-
         return retrieve(entity.getUserId());
+    }
+
+    public List<TodoEntity> delete(final TodoEntity entity) {
+        // (1) 저장할 엔티티가 유요한지 확인
+        validate(entity);
+
+        try {
+            // (2) 엔티티 삭제
+            repository.delete(entity);
+        } catch (Exception e) {
+            // (3) exception 발생시 id와 exception을 로깅
+            log.error("error deleting entity ", entity.getId(), e);
+
+            // (4) 컨트롤러로 exception을 보냄(데이터베이스 내부 로직을 캡슐화하려면 e를 리턴하지 않고 새 exception 오브젝트를 리턴)
+            throw new RuntimeException("error deleting entity " + entity.getId());
+        }
+
+        // (5) 새 Todo리스트를 가져와 리턴
+        return retrieve(entity.getUserId());
+    }
+
+    private void validate(final TodoEntity entity) {
+        if (entity == null) {
+            log.warn("Entity cannot be null");
+            throw new RuntimeException("Entity cannot be null");
+        }
+
+        if (entity.getUserId() == null) {
+            log.warn("Unknown user");
+            throw new RuntimeException("Unknown user");
+        }
     }
 
     public String testService() {
