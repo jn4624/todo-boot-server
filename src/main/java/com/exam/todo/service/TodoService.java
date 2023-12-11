@@ -37,6 +37,10 @@ public class TodoService {
         }
     }
 
+    public List<TodoEntity> retrieve(final String userId) {
+        return todoRepository.findByUserId(userId);
+    }
+
     public String testService() {
         TodoEntity entity = TodoEntity.builder()
                 .title("My first todo item")
